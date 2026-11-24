@@ -316,6 +316,8 @@ html.a11y-still *{animation:none!important;transition:none!important;scroll-beha
 <script>
 // ===== הגדרה אחת בלבד: הדביקי כאן את כתובת ה-Web app מ-Google Apps Script (מסתיימת ב-/exec) =====
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzM1fJIXNSrSDLP4LtdwIGIKbVesMe8dIhKzHYDe8teMG9q3RIdTPFXficpMYeBsAoXQ/exec";
+// ===== כתובת ה-Webhook של התרחיש ב-Make (פרטית: לא לפרסם במקום אחר) =====
+const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/o6vot2m6ej7ax9drawi1t7b3ki9b7f8p";
 
 (function(){
   const $=id=>document.getElementById(id);
@@ -345,6 +347,11 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzM1fJIXNSrSDL
         throw new Error('not_configured');
       }
       // text/plain: נשלח בלי בקשת preflight, כך ש-Apps Script מקבל את הבקשה ומחזיר תשובה קריאה
+      // שליחה גם לתרחיש ב-Make. לא מעכבת את הטופס, ואם היא נכשלת הפנייה עדיין נשמרת בגיליון דרך Apps Script
+      try{
+        const mk=new URLSearchParams({name, business, email, phone, source:'דף נחיתה', consent:'true'});
+        if(!(navigator.sendBeacon && navigator.sendBeacon(MAKE_WEBHOOK_URL, mk))) fetch(MAKE_WEBHOOK_URL,{method:'POST',mode:'no-cors',body:mk});
+      }catch(_){}
       const r=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({source:'BackBone Flow – דף נחיתה', name, email, business, phone, consent:true})});
       const j=await r.json(); if(!j.ok) throw new Error(j.error||'failed');
       $('lead-form').hidden=true; $('thanks').hidden=false;
